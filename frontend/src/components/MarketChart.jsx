@@ -4,8 +4,9 @@ const COINS = [
   { label: "BTCUSDT", symbol: "MEXC:BTCUSDT" },
   { label: "ETHUSDT", symbol: "MEXC:ETHUSDT" },
   { label: "SOLUSDT", symbol: "MEXC:SOLUSDT" },
-  { label: "BNBUSDT", symbol: "MEXC:BNBUSDT" },
+  { label: "TAOUSDT", symbol: "MEXC:TAOUSDT" },
   { label: "XRPUSDT", symbol: "MEXC:XRPUSDT" },
+  { label: "LTCUSDT", symbol: "MEXC:LTCUSDT" },
 ];
 
 function Widget({ symbol }) {
