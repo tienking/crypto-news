@@ -7,17 +7,23 @@ import feedparser
 
 # Curated crypto news feeds. Edit freely.
 FEEDS = [
-    {"name": "CoinDesk",         "url": "https://www.coindesk.com/arc/outboundfeeds/rss/"},
-    {"name": "Cointelegraph",    "url": "https://cointelegraph.com/rss"},
-    {"name": "Decrypt",          "url": "https://decrypt.co/feed"},
-    {"name": "The Block",        "url": "https://www.theblock.co/rss.xml"},
-    {"name": "CryptoSlate",      "url": "https://cryptoslate.com/feed/"},
-    {"name": "Bitcoin Magazine", "url": "https://bitcoinmagazine.com/.rss/full/"},
-    {"name": "BeInCrypto",       "url": "https://beincrypto.com/feed/"},
-    {"name": "CoinJournal",      "url": "https://coinjournal.net/feed/"},
+    {"name": "CoinDesk",      "url": "https://www.coindesk.com/arc/outboundfeeds/rss/"},
+    {"name": "Cointelegraph", "url": "https://cointelegraph.com/rss"},
+    {"name": "Decrypt",       "url": "https://decrypt.co/feed"},
+    {"name": "CryptoSlate",   "url": "https://cryptoslate.com/feed/"},
+    {"name": "BeInCrypto",    "url": "https://beincrypto.com/feed/"},
+    {"name": "CoinJournal",   "url": "https://coinjournal.net/feed/"},
+    {"name": "U.Today",       "url": "https://u.today/rss"},
+    {"name": "AMBCrypto",     "url": "https://ambcrypto.com/feed/"},
+    {"name": "CryptoNews",    "url": "https://cryptonews.com/news/feed/"},
 ]
 
-HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; CryptoNewsBot/1.0; +https://tienmai.space)"}
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                  "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    "Accept": "application/rss+xml, application/xml, text/xml, */*",
+    "Accept-Language": "en-US,en;q=0.9",
+}
 
 _TAG_RE = re.compile(r"<[^>]+>")
 _WS_RE = re.compile(r"\s+")
