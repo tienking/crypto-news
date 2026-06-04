@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 
 const COINS = [
-  { label: "BTCUSDT", symbol: "BINANCE:BTCUSDT" },
-  { label: "ETHUSDT", symbol: "BINANCE:ETHUSDT" },
-  { label: "SOLUSDT", symbol: "BINANCE:SOLUSDT" },
-  { label: "BNBUSDT", symbol: "BINANCE:BNBUSDT" },
-  { label: "XRPUSDT", symbol: "BINANCE:XRPUSDT" },
+  { label: "BTCUSDT", symbol: "MEXC:BTCUSDT" },
+  { label: "ETHUSDT", symbol: "MEXC:ETHUSDT" },
+  { label: "SOLUSDT", symbol: "MEXC:SOLUSDT" },
+  { label: "BNBUSDT", symbol: "MEXC:BNBUSDT" },
+  { label: "XRPUSDT", symbol: "MEXC:XRPUSDT" },
 ];
 
 function Widget({ symbol }) {
