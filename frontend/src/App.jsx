@@ -3,6 +3,7 @@ import { fetchArticles, fetchSources } from "./lib/api";
 import ArticleCard from "./components/ArticleCard";
 import Reader from "./components/Reader";
 import ChatPopup from "./components/ChatPopup";
+import MarketChart from "./components/MarketChart";
 
 const LIMIT = 24;
 
@@ -75,6 +76,7 @@ export default function App() {
       </header>
 
       <main style={{ maxWidth: 1200, margin: "0 auto", padding: "24px 24px 60px" }}>
+        <MarketChart />
         {loading && articles.length === 0 ? (
           <div style={{ display: "flex", justifyContent: "center", padding: "80px 0" }}>
             <div style={{ width: 26, height: 26, borderRadius: "50%", border: "2px solid var(--accent)", borderTopColor: "transparent", animation: "spin .8s linear infinite" }} />
