@@ -21,6 +21,16 @@ export async function fetchSources() {
   return res.json();
 }
 
+export async function chat(message, history) {
+  const res = await fetch(`${BASE}/chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message, history }),
+  });
+  if (!res.ok) throw new Error("Chat request failed");
+  return res.json(); // { reply }
+}
+
 // "3h ago", "2d ago", etc.
 export function timeAgo(iso) {
   if (!iso) return "";

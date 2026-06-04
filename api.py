@@ -1,6 +1,9 @@
 from fastapi import APIRouter, Query, HTTPException
-from database import list_articles, get_article, list_sources, upsert_articles
+from pydantic import BaseModel
+from typing import List, Dict, Optional
+from database import list_articles, get_article, list_sources, upsert_articles, get_recent_articles
 from rss import fetch_all
+from grok import grok_chat
 
 router = APIRouter()
 
@@ -35,3 +38,38 @@ async def refresh():
     items = await fetch_all()
     inserted = await upsert_articles(items)
     return {"fetched": len(items), "inserted": inserted}
+
+
+# ── Chatbot (Grok / xAI) ────────────────────────────────────────────────────────
+
+class ChatRequest(BaseModel):
+    message: str
+    history: Optional[List[Dict[str, str]]] = None
+
+SYSTEM_PROMPT = (
+    "You are the AI assistant for 'Crypto News', a cryptocurrency news aggregator. "
+    "Help users understand crypto markets, projects, and the latest news. Be concise, "
+    "accurate, and neutral — never give financial advice; add a brief risk caveat when "
+    "users ask whether to buy/sell. Reply in the user's language.\n\n"
+    "Below are the most recent headlines from the site for context. Use them when the user "
+    "asks about current/latest news; otherwise answer from general crypto knowledge.\n"
+)
+
+@router.post("/api/crypto-news/chat")
+async def chat(req: ChatRequest):
+    recent = await get_recent_articles(30)
+    context = "\n".join(
+        f"- [{a.get('source','')}] {a.get('title','')} ({a.get('published','')}) — {a.get('summary','')}"
+        for a in recent
+    )
+    messages = [{"role": "system", "content": SYSTEM_PROMPT + "\n=== LATEST HEADLINES ===\n" + context}]
+    for m in (req.history or [])[-8:]:
+        role = "assistant" if m.get("role") == "assistant" else "user"
+        messages.append({"role": role, "content": m.get("content", "")})
+    messages.append({"role": "user", "content": req.message})
+    try:
+        reply = await grok_chat(messages)
+        return {"reply": reply}
+    except Exception as e:
+        print(f"[chat] error: {e}")
+        return {"reply": "Sorry, the assistant is unavailable right now. Please try again."}

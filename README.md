@@ -18,6 +18,8 @@ with in-app reading, source filters, and search.
    once on startup. No external cron needed.
 4. The React frontend lists articles (featured + grid), filters by source, searches, and
    opens an **in-app reader** (with a link to the original).
+5. A **Grok-powered chatbot** (bottom-right) answers questions about crypto and the latest
+   news — it gets the 30 most recent headlines as context (RAG).
 
 ---
 
@@ -28,6 +30,7 @@ with in-app reading, source filters, and search.
 | Backend | Python / FastAPI · Uvicorn (port **8003**) |
 | RSS | feedparser + httpx (async fetch) |
 | Scheduler | APScheduler (in-process, every 15 min) |
+| Chatbot | Grok (xAI) — OpenAI-compatible API, RAG over recent headlines |
 | Database | MongoDB (Motor) — db `cryptonews`, collection `articles` |
 | Frontend | React 19 + Vite (base `/projects/crypto-news/`) · Inter + JetBrains Mono |
 | Hosting | Hostinger VPS (shared), Nginx, systemd, GitLab CI/CD |
@@ -41,8 +44,9 @@ crypto-news/
 ├── main.py                  # FastAPI app + APScheduler (refresh on startup + interval)
 ├── api.py                   # Routes (/api/crypto-news/*)
 ├── rss.py                   # FEEDS list + fetch/parse/normalize
-├── database.py              # Motor: upsert (dedup by guid), list, get, sources
-├── config.py                # Env loader (MONGODB_URL, REFRESH_MINUTES)
+├── grok.py                  # Grok (xAI) chat client
+├── database.py              # Motor: upsert (dedup by guid), list, get, sources, recent
+├── config.py                # Env loader (MONGODB_URL, REFRESH_MINUTES, XAI_API_KEY, GROK_MODEL)
 ├── requirements.txt
 ├── .env.example
 ├── .gitlab-ci.yml
@@ -59,7 +63,8 @@ crypto-news/
         ├── index.css           # Dark theme + fonts
         ├── components/
         │   ├── ArticleCard.jsx  # Card (image, source, time-ago, summary)
-        │   └── Reader.jsx       # In-app article reader + "Read original"
+        │   ├── Reader.jsx       # In-app article reader + "Read original"
+        │   └── ChatPopup.jsx    # Grok chatbot (bottom-right)
         └── lib/api.js           # API client + timeAgo()
 ```
 
@@ -74,6 +79,7 @@ crypto-news/
 | GET | `/api/crypto-news/article/{id}` | Single article (with full content) |
 | GET | `/api/crypto-news/sources` | Distinct source names (for filters) |
 | POST | `/api/crypto-news/refresh` | Manually trigger an RSS refresh |
+| POST | `/api/crypto-news/chat` | Grok chatbot (`message`, `history`) → `{reply}` |
 
 ---
 
@@ -84,7 +90,7 @@ crypto-news/
 python -m venv crypto-news-venv
 source crypto-news-venv/bin/activate     # Windows: crypto-news-venv\Scripts\activate
 pip install -r requirements.txt
-cp .env.example .env                       # set MONGODB_URL
+cp .env.example .env                       # set MONGODB_URL + XAI_API_KEY
 uvicorn main:app --port 8003               # fetches RSS on startup
 
 # Frontend (separate terminal)

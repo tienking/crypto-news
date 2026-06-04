@@ -68,3 +68,15 @@ async def get_article(article_id: str):
 
 async def list_sources():
     return sorted(await articles_col.distinct("source"))
+
+
+async def get_recent_articles(limit: int = 30):
+    """Lightweight recent headlines for the chatbot context."""
+    cursor = (articles_col.find({}, {"_id": 0, "title": 1, "source": 1, "summary": 1, "published": 1})
+              .sort("published", DESCENDING)
+              .limit(limit))
+    items = await cursor.to_list(length=limit)
+    for it in items:
+        if isinstance(it.get("published"), datetime):
+            it["published"] = it["published"].strftime("%Y-%m-%d %H:%M UTC")
+    return items

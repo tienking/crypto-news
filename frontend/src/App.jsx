@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { fetchArticles, fetchSources } from "./lib/api";
 import ArticleCard from "./components/ArticleCard";
 import Reader from "./components/Reader";
+import ChatPopup from "./components/ChatPopup";
 
 const LIMIT = 24;
 
@@ -44,6 +45,7 @@ export default function App() {
   if (reading) return (
     <div style={{ minHeight: "100vh" }}>
       <Reader id={reading} onBack={() => setReading(null)} />
+      <ChatPopup />
     </div>
   );
 
@@ -106,6 +108,8 @@ export default function App() {
           </>
         )}
       </main>
+
+      <ChatPopup />
     </div>
   );
 }

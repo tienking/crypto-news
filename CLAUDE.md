@@ -23,7 +23,7 @@ Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
 ```
 
 **Types**: `feat` · `fix` · `refactor` · `style` · `docs` · `chore` · `ci`
-**Scopes** (optional): `api` · `ui` · `rss` · `db`
+**Scopes** (optional): `api` · `ui` · `rss` · `db` · `chat`
 
 ## Documentation Update Rule
 
@@ -47,6 +47,8 @@ Use `type: docs` only when the commit touches docs exclusively.
 - **Vite base**: `/projects/crypto-news/`.
 - **RSS**: feed list lives in `rss.py` (`FEEDS`). Articles are deduped by `guid` (upsert).
   Refresh runs in-process via APScheduler every `REFRESH_MINUTES` (default 15) + on startup.
+- **Chatbot**: uses **Grok (xAI)**, NOT Gemini — OpenAI-compatible API via `grok.py`
+  (`XAI_API_KEY`, `GROK_MODEL` default `grok-3`). RAG context = 30 most recent headlines.
 
 ## After Deploy
 
