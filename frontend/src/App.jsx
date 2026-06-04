@@ -62,7 +62,6 @@ export default function App() {
             <h1 style={{ fontSize: 22, fontWeight: 800, letterSpacing: "-0.02em" }}>
               Crypto<span style={{ color: "var(--accent)" }}>News</span>
             </h1>
-            <span style={{ fontSize: 11, color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>aggregated · auto-updated</span>
           </div>
           <input value={q} onChange={e => setQ(e.target.value)} placeholder="🔍 Search news..."
             style={{ fontSize: 13, padding: "9px 14px", borderRadius: 10, border: "1px solid var(--border)", background: "var(--bg)", color: "var(--text)", outline: "none", width: 260, fontFamily: "var(--font-display)" }} />

@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 
 const COINS = [
-  { label: "BTC", symbol: "BINANCE:BTCUSDT" },
-  { label: "ETH", symbol: "BINANCE:ETHUSDT" },
-  { label: "SOL", symbol: "BINANCE:SOLUSDT" },
-  { label: "BNB", symbol: "BINANCE:BNBUSDT" },
-  { label: "XRP", symbol: "BINANCE:XRPUSDT" },
+  { label: "BTCUSDT", symbol: "BINANCE:BTCUSDT" },
+  { label: "ETHUSDT", symbol: "BINANCE:ETHUSDT" },
+  { label: "SOLUSDT", symbol: "BINANCE:SOLUSDT" },
+  { label: "BNBUSDT", symbol: "BINANCE:BNBUSDT" },
+  { label: "XRPUSDT", symbol: "BINANCE:XRPUSDT" },
 ];
 
 function Widget({ symbol }) {
@@ -34,7 +34,7 @@ function Widget({ symbol }) {
       locale: "en",
       autosize: true,
       hide_side_toolbar: true,
-      allow_symbol_change: true,
+      allow_symbol_change: false,
       backgroundColor: "rgba(15,15,15,1)",
       gridColor: "rgba(255,255,255,0.05)",
       withdateranges: true,
@@ -53,11 +53,9 @@ export default function MarketChart() {
 
   return (
     <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 14, overflow: "hidden", marginBottom: 20 }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", borderBottom: "1px solid var(--border)" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ fontSize: 12, fontFamily: "var(--font-mono)", color: "var(--text-muted)", letterSpacing: "0.06em" }}>MARKET · 1H</span>
-        </div>
-        <div style={{ display: "flex", gap: 6 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap", padding: "10px 14px", borderBottom: "1px solid var(--border)" }}>
+        <span style={{ fontSize: 12, fontFamily: "var(--font-mono)", color: "var(--text-muted)", letterSpacing: "0.06em" }}>MARKET · 1H</span>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
           {COINS.map(c => (
             <button key={c.label} onClick={() => setCoin(c)}
               style={{
