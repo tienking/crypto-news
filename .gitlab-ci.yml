@@ -1,0 +1,11 @@
+stages:
+  - deploy
+
+deploy:
+  stage: deploy
+  tags:
+    - tienmai-space-vps
+  only:
+    - main
+  script:
+    - sudo /usr/local/bin/deploy-crypto-news.sh
