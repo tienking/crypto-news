@@ -31,6 +31,50 @@ export async function chat(message, history) {
   return res.json(); // { reply }
 }
 
+export async function fetchCoins() {
+  const res = await fetch(`${BASE}/coins`);
+  if (!res.ok) return [];
+  return res.json();
+}
+
+// ── Admin ──────────────────────────────────────────────────────────────────────
+
+const authH = (token) => ({ "Content-Type": "application/json", Authorization: `Bearer ${token}` });
+
+export async function adminLogin(username, password) {
+  const res = await fetch(`${BASE}/admin/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password }),
+  });
+  if (!res.ok) throw new Error("Invalid username or password");
+  return res.json(); // { access_token }
+}
+
+export async function adminGetCoins(token) {
+  const res = await fetch(`${BASE}/admin/coins`, { headers: authH(token) });
+  if (!res.ok) throw new Error("Failed");
+  return res.json();
+}
+
+export async function adminSaveCoins(token, items) {
+  const res = await fetch(`${BASE}/admin/coins`, { method: "PUT", headers: authH(token), body: JSON.stringify({ items }) });
+  if (!res.ok) throw new Error("Save failed");
+  return res.json();
+}
+
+export async function adminGetFeeds(token) {
+  const res = await fetch(`${BASE}/admin/feeds`, { headers: authH(token) });
+  if (!res.ok) throw new Error("Failed");
+  return res.json();
+}
+
+export async function adminSaveFeeds(token, items) {
+  const res = await fetch(`${BASE}/admin/feeds`, { method: "PUT", headers: authH(token), body: JSON.stringify({ items }) });
+  if (!res.ok) throw new Error("Save failed");
+  return res.json();
+}
+
 // "3h ago", "2d ago", etc.
 export function timeAgo(iso) {
   if (!iso) return "";

@@ -20,6 +20,8 @@ with in-app reading, source filters, and search.
    opens an **in-app reader** (with a link to the original).
 5. A **Grok-powered chatbot** (bottom-right) answers questions about crypto and the latest
    news — it gets the 30 most recent headlines as context (RAG).
+6. An **Admin page** (`/projects/crypto-news/admin`, JWT login) edits the TradingView chart
+   coin pairs and the RSS source list — both stored in MongoDB (`settings` collection).
 
 ---
 
@@ -43,10 +45,11 @@ with in-app reading, source filters, and search.
 crypto-news/
 ├── main.py                  # FastAPI app + APScheduler (refresh on startup + interval)
 ├── api.py                   # Routes (/api/crypto-news/*)
-├── rss.py                   # FEEDS list + fetch/parse/normalize
+├── rss.py                   # DEFAULT_FEEDS + fetch/parse/normalize (feeds come from DB)
 ├── grok.py                  # Grok (xAI) chat client
-├── database.py              # Motor: upsert (dedup by guid), list, get, sources, recent
-├── config.py                # Env loader (MONGODB_URL, REFRESH_MINUTES, XAI_API_KEY, GROK_MODEL)
+├── auth.py                  # Admin JWT + bcrypt
+├── database.py              # Motor: articles + settings (coins/feeds/admin), seed defaults
+├── config.py                # Env loader (Mongo, Grok, JWT_SECRET, ADMIN_*)
 ├── requirements.txt
 ├── .env.example
 ├── .gitlab-ci.yml
@@ -58,13 +61,15 @@ crypto-news/
     ├── vite.config.js       # base "/projects/crypto-news/", proxy → 8003
     ├── public/favicon.svg   # 📰
     └── src/
-        ├── main.jsx
-        ├── App.jsx              # News list, source chips, search, load-more
+        ├── main.jsx            # Routes to AdminApp if path ends with /admin, else App
+        ├── App.jsx             # News list, source chips, search, load-more, Admin link
+        ├── AdminApp.jsx        # Login + coin-pairs editor + RSS-sources editor
         ├── index.css           # Dark theme + fonts
         ├── components/
         │   ├── ArticleCard.jsx  # Card (image, source, time-ago, summary)
         │   ├── Reader.jsx       # In-app article reader + "Read original"
-        │   └── ChatPopup.jsx    # Grok chatbot (bottom-right)
+        │   ├── ChatPopup.jsx    # Grok chatbot (bottom-right)
+        │   └── MarketChart.jsx  # TradingView candle chart (coins from /coins API)
         └── lib/api.js           # API client + timeAgo()
 ```
 
@@ -78,8 +83,16 @@ crypto-news/
 | GET | `/api/crypto-news/articles` | Paginated list (`page`, `limit`, `source`, `q`) |
 | GET | `/api/crypto-news/article/{id}` | Single article (with full content) |
 | GET | `/api/crypto-news/sources` | Distinct source names (for filters) |
+| GET | `/api/crypto-news/coins` | Chart coin pairs (public, for MarketChart) |
 | POST | `/api/crypto-news/refresh` | Manually trigger an RSS refresh |
 | POST | `/api/crypto-news/chat` | Grok chatbot (`message`, `history`) → `{reply}` |
+| POST | `/api/crypto-news/admin/login` | Admin login → JWT |
+| GET/PUT | `/api/crypto-news/admin/coins` | Read / save chart coin pairs |
+| GET/PUT | `/api/crypto-news/admin/feeds` | Read / save RSS sources (PUT also refetches) |
+
+> **Admin:** seeded on first run from `ADMIN_USERNAME` / `ADMIN_PASSWORD` env
+> (default `admin` / `changeme123`). Coin pairs and feeds live in the `settings`
+> collection — defaults are seeded once, then editable via the Admin page.
 
 ---
 

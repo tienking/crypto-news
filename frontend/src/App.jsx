@@ -63,8 +63,14 @@ export default function App() {
               Crypto<span style={{ color: "var(--accent)" }}>News</span>
             </h1>
           </div>
-          <input value={q} onChange={e => setQ(e.target.value)} placeholder="🔍 Search news..."
-            style={{ fontSize: 13, padding: "9px 14px", borderRadius: 10, border: "1px solid var(--border)", background: "var(--bg)", color: "var(--text)", outline: "none", width: 260, fontFamily: "var(--font-display)" }} />
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <input value={q} onChange={e => setQ(e.target.value)} placeholder="🔍 Search news..."
+              style={{ fontSize: 13, padding: "9px 14px", borderRadius: 10, border: "1px solid var(--border)", background: "var(--bg)", color: "var(--text)", outline: "none", width: 240, fontFamily: "var(--font-display)" }} />
+            <a href="/projects/crypto-news/admin"
+              style={{ fontSize: 12, color: "var(--text-muted)", textDecoration: "none", border: "1px solid var(--border)", borderRadius: 9, padding: "8px 14px", whiteSpace: "nowrap" }}>
+              Admin
+            </a>
+          </div>
         </div>
 
         {/* Source filter chips */}

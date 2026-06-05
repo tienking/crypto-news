@@ -5,8 +5,8 @@ from datetime import datetime, timezone
 import httpx
 import feedparser
 
-# Curated crypto news feeds. Edit freely.
-FEEDS = [
+# Default crypto news feeds — seeded into MongoDB on first run, then editable via Admin.
+DEFAULT_FEEDS = [
     {"name": "CoinDesk",      "url": "https://www.coindesk.com/arc/outboundfeeds/rss/"},
     {"name": "Cointelegraph", "url": "https://cointelegraph.com/rss"},
     {"name": "Decrypt",       "url": "https://decrypt.co/feed"},
@@ -100,7 +100,8 @@ async def fetch_feed(feed: dict) -> list[dict]:
         return []
 
 
-async def fetch_all() -> list[dict]:
+async def fetch_all(feeds: list[dict] | None = None) -> list[dict]:
     import asyncio
-    results = await asyncio.gather(*(fetch_feed(f) for f in FEEDS))
+    feeds = feeds or DEFAULT_FEEDS
+    results = await asyncio.gather(*(fetch_feed(f) for f in feeds))
     return [a for batch in results for a in batch]

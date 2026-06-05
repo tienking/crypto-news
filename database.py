@@ -1,17 +1,62 @@
 from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo import UpdateOne, DESCENDING
-from config import MONGODB_URL
+from config import MONGODB_URL, ADMIN_USERNAME, ADMIN_PASSWORD
+from rss import DEFAULT_FEEDS
 from datetime import datetime, timezone
 
 client = AsyncIOMotorClient(MONGODB_URL)
 db = client["cryptonews"]
 articles_col = db["articles"]
+settings_col = db["settings"]
+
+DEFAULT_COINS = [
+    {"label": "BTCUSDT", "symbol": "MEXC:BTCUSDT"},
+    {"label": "ETHUSDT", "symbol": "MEXC:ETHUSDT"},
+    {"label": "SOLUSDT", "symbol": "MEXC:SOLUSDT"},
+    {"label": "TAOUSDT", "symbol": "MEXC:TAOUSDT"},
+    {"label": "XRPUSDT", "symbol": "MEXC:XRPUSDT"},
+    {"label": "LTCUSDT", "symbol": "MEXC:LTCUSDT"},
+]
 
 
 async def ensure_indexes():
     await articles_col.create_index("guid", unique=True)
     await articles_col.create_index([("published", DESCENDING)])
     await articles_col.create_index("source")
+
+
+# ── Settings: coins / feeds / admin (seeded on first run) ──────────────────────
+
+async def seed_defaults():
+    from auth import hash_password
+    if not await settings_col.find_one({"type": "coins"}):
+        await settings_col.update_one({"type": "coins"}, {"$set": {"list": DEFAULT_COINS}}, upsert=True)
+    if not await settings_col.find_one({"type": "feeds"}):
+        await settings_col.update_one({"type": "feeds"}, {"$set": {"list": DEFAULT_FEEDS}}, upsert=True)
+    if not await settings_col.find_one({"type": "admin"}):
+        await settings_col.update_one(
+            {"type": "admin"},
+            {"$set": {"username": ADMIN_USERNAME, "hashed_password": hash_password(ADMIN_PASSWORD)}},
+            upsert=True,
+        )
+
+
+async def get_coins():
+    d = await settings_col.find_one({"type": "coins"}, {"_id": 0})
+    return d["list"] if d else DEFAULT_COINS
+
+async def set_coins(items: list[dict]):
+    await settings_col.update_one({"type": "coins"}, {"$set": {"list": items}}, upsert=True)
+
+async def get_feeds():
+    d = await settings_col.find_one({"type": "feeds"}, {"_id": 0})
+    return d["list"] if d else DEFAULT_FEEDS
+
+async def set_feeds(items: list[dict]):
+    await settings_col.update_one({"type": "feeds"}, {"$set": {"list": items}}, upsert=True)
+
+async def get_admin():
+    return await settings_col.find_one({"type": "admin"}, {"_id": 0})
 
 
 async def upsert_articles(items: list[dict]) -> int:

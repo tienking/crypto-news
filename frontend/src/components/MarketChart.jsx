@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
+import { fetchCoins } from "../lib/api";
 
-const COINS = [
+const DEFAULT_COINS = [
   { label: "BTCUSDT", symbol: "MEXC:BTCUSDT" },
   { label: "ETHUSDT", symbol: "MEXC:ETHUSDT" },
   { label: "SOLUSDT", symbol: "MEXC:SOLUSDT" },
@@ -50,14 +51,24 @@ function Widget({ symbol }) {
 }
 
 export default function MarketChart() {
-  const [coin, setCoin] = useState(COINS[0]);
+  const [coins, setCoins] = useState(DEFAULT_COINS);
+  const [coin, setCoin] = useState(DEFAULT_COINS[0]);
+
+  useEffect(() => {
+    fetchCoins().then(list => {
+      if (Array.isArray(list) && list.length) {
+        setCoins(list);
+        setCoin(list[0]);
+      }
+    }).catch(() => {});
+  }, []);
 
   return (
     <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 14, overflow: "hidden", marginBottom: 20 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap", padding: "10px 14px", borderBottom: "1px solid var(--border)" }}>
         <span style={{ fontSize: 12, fontFamily: "var(--font-mono)", color: "var(--text-muted)", letterSpacing: "0.06em" }}>MARKET · 1H</span>
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-          {COINS.map(c => (
+          {coins.map(c => (
             <button key={c.label} onClick={() => setCoin(c)}
               style={{
                 fontSize: 12, fontWeight: 600, padding: "5px 12px", borderRadius: 8, cursor: "pointer",

@@ -49,6 +49,11 @@ Use `type: docs` only when the commit touches docs exclusively.
   Refresh runs in-process via APScheduler every `REFRESH_MINUTES` (default 15) + on startup.
 - **Chatbot**: uses **Grok (xAI)**, NOT Gemini — OpenAI-compatible API via `grok.py`
   (`XAI_API_KEY`, `GROK_MODEL` default `grok-3`). RAG context = 30 most recent headlines.
+- **Admin**: JWT (`auth.py`), seeded from `ADMIN_USERNAME`/`ADMIN_PASSWORD`. Coin pairs +
+  RSS feeds are stored in the `settings` collection (seeded once from DEFAULT_COINS /
+  DEFAULT_FEEDS), editable at `/projects/crypto-news/admin`. The chart and RSS job read
+  them from the DB, not hardcoded. Admin SPA is the same Vite build, routed client-side
+  in `main.jsx` when the path ends with `/admin`.
 
 ## After Deploy
 
