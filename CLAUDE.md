@@ -47,8 +47,10 @@ Use `type: docs` only when the commit touches docs exclusively.
 - **Vite base**: `/projects/crypto-news/`.
 - **RSS**: feed list lives in `rss.py` (`FEEDS`). Articles are deduped by `guid` (upsert).
   Refresh runs in-process via APScheduler every `REFRESH_MINUTES` (default 15) + on startup.
-- **Chatbot**: uses **Grok (xAI)**, NOT Gemini — OpenAI-compatible API via `grok.py`
-  (`XAI_API_KEY`, `GROK_MODEL` default `grok-3`). RAG context = 30 most recent headlines.
+- **Chatbot**: provider is switchable between **Grok (xAI)** (`grok.py`) and **Gemini**
+  (`gemini.py`), dispatched by `ai.py` per the `settings` type="ai" doc (provider +
+  grok_model + gemini_model), editable in Admin. Keys: `XAI_API_KEY`, `GEMINI_API_KEY`.
+  RAG context = 30 most recent headlines. The chat endpoint returns `{reply, provider}`.
 - **Admin**: JWT (`auth.py`), seeded from `ADMIN_USERNAME`/`ADMIN_PASSWORD`. Coin pairs +
   RSS feeds are stored in the `settings` collection (seeded once from DEFAULT_COINS /
   DEFAULT_FEEDS), editable at `/projects/crypto-news/admin`. The chart and RSS job read

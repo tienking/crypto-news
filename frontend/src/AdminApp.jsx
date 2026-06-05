@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { adminLogin, adminGetCoins, adminSaveCoins, adminGetFeeds, adminSaveFeeds } from "./lib/api";
+import { adminLogin, adminGetCoins, adminSaveCoins, adminGetFeeds, adminSaveFeeds, adminGetAi, adminSaveAi } from "./lib/api";
 
 const NEWS_URL = "/projects/crypto-news/";
 
@@ -95,18 +95,27 @@ function ListEditor({ title, fields, items, setItems }) {
 function Dashboard({ token, onLogout }) {
   const [coins, setCoins] = useState([]);
   const [feeds, setFeeds] = useState([]);
+  const [ai, setAi] = useState(null);
   const [loading, setLoading] = useState(true);
   const [savingCoins, setSavingCoins] = useState(false);
   const [savingFeeds, setSavingFeeds] = useState(false);
+  const [savingAi, setSavingAi] = useState(false);
   const [msg, setMsg] = useState("");
 
   const flash = (m) => { setMsg(m); setTimeout(() => setMsg(""), 3000); };
 
   useEffect(() => {
-    Promise.all([adminGetCoins(token), adminGetFeeds(token)])
-      .then(([c, f]) => { setCoins(c); setFeeds(f); setLoading(false); })
+    Promise.all([adminGetCoins(token), adminGetFeeds(token), adminGetAi(token)])
+      .then(([c, f, a]) => { setCoins(c); setFeeds(f); setAi(a); setLoading(false); })
       .catch(() => { localStorage.removeItem("cn_admin_token"); onLogout(); });
   }, [token]);
+
+  const saveAi = async () => {
+    setSavingAi(true);
+    try { await adminSaveAi(token, ai); flash(`✓ AI set to ${ai.provider}`); }
+    catch { flash("Failed to save AI settings"); }
+    setSavingAi(false);
+  };
 
   const saveCoins = async () => {
     setSavingCoins(true);
@@ -148,6 +157,48 @@ function Dashboard({ token, onLogout }) {
       </header>
 
       <main style={{ maxWidth: 860, margin: "0 auto", padding: "28px 24px 60px", display: "flex", flexDirection: "column", gap: 40 }}>
+        {/* AI provider */}
+        <section>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+            <h1 style={{ fontSize: 17, fontWeight: 700 }}>Chatbot AI</h1>
+            <button onClick={saveAi} disabled={savingAi}
+              style={{ padding: "8px 20px", borderRadius: 9, border: "none", background: "var(--accent)", color: "#000", fontSize: 13, fontWeight: 700, cursor: savingAi ? "default" : "pointer", opacity: savingAi ? 0.7 : 1 }}>
+              {savingAi ? "Saving..." : "Save"}
+            </button>
+          </div>
+          {ai && (
+            <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 12, padding: 16 }}>
+              <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 10 }}>Active provider</p>
+              <div style={{ display: "flex", gap: 8, marginBottom: 18 }}>
+                {["grok", "gemini"].map(p => (
+                  <button key={p} onClick={() => setAi({ ...ai, provider: p })}
+                    style={{
+                      flex: 1, padding: "10px", borderRadius: 10, cursor: "pointer", fontSize: 13, fontWeight: 600,
+                      fontFamily: "var(--font-display)", textTransform: "capitalize",
+                      border: `1px solid ${ai.provider === p ? "var(--accent-border)" : "var(--border)"}`,
+                      background: ai.provider === p ? "var(--accent-dim)" : "transparent",
+                      color: ai.provider === p ? "var(--accent)" : "var(--text-muted)",
+                    }}>
+                    {p === "grok" ? "Grok (xAI)" : "Gemini (Google)"}
+                  </button>
+                ))}
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+                <div>
+                  <label style={{ fontSize: 12, color: "var(--text-muted)", display: "block", marginBottom: 5 }}>Grok model</label>
+                  <input value={ai.grok_model} onChange={e => setAi({ ...ai, grok_model: e.target.value })}
+                    placeholder="grok-3" style={{ ...inp, fontFamily: "var(--font-mono)" }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: 12, color: "var(--text-muted)", display: "block", marginBottom: 5 }}>Gemini model</label>
+                  <input value={ai.gemini_model} onChange={e => setAi({ ...ai, gemini_model: e.target.value })}
+                    placeholder="gemini-2.5-flash" style={{ ...inp, fontFamily: "var(--font-mono)" }} />
+                </div>
+              </div>
+            </div>
+          )}
+        </section>
+
         {/* Coins */}
         <section>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>

@@ -75,6 +75,18 @@ export async function adminSaveFeeds(token, items) {
   return res.json();
 }
 
+export async function adminGetAi(token) {
+  const res = await fetch(`${BASE}/admin/ai-settings`, { headers: authH(token) });
+  if (!res.ok) throw new Error("Failed");
+  return res.json();
+}
+
+export async function adminSaveAi(token, settings) {
+  const res = await fetch(`${BASE}/admin/ai-settings`, { method: "PUT", headers: authH(token), body: JSON.stringify(settings) });
+  if (!res.ok) throw new Error("Save failed");
+  return res.json();
+}
+
 // "3h ago", "2d ago", etc.
 export function timeAgo(iso) {
   if (!iso) return "";

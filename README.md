@@ -18,10 +18,12 @@ with in-app reading, source filters, and search.
    once on startup. No external cron needed.
 4. The React frontend lists articles (featured + grid), filters by source, searches, and
    opens an **in-app reader** (with a link to the original).
-5. A **Grok-powered chatbot** (bottom-right) answers questions about crypto and the latest
-   news — it gets the 30 most recent headlines as context (RAG).
+5. An **AI chatbot** (bottom-right) answers questions about crypto and the latest news —
+   it gets the 30 most recent headlines as context (RAG). The provider is switchable
+   between **Grok (xAI)** and **Gemini (Google)**, each with its own model.
 6. An **Admin page** (`/projects/crypto-news/admin`, JWT login) edits the TradingView chart
-   coin pairs and the RSS source list — both stored in MongoDB (`settings` collection).
+   coin pairs, the RSS source list, and the AI provider/model — all stored in MongoDB
+   (`settings` collection).
 
 ---
 
@@ -32,7 +34,7 @@ with in-app reading, source filters, and search.
 | Backend | Python / FastAPI · Uvicorn (port **8003**) |
 | RSS | feedparser + httpx (async fetch) |
 | Scheduler | APScheduler (in-process, every 15 min) |
-| Chatbot | Grok (xAI) — OpenAI-compatible API, RAG over recent headlines |
+| Chatbot | Grok (xAI) or Gemini (Google) — switchable in Admin, RAG over recent headlines |
 | Database | MongoDB (Motor) — db `cryptonews`, collection `articles` |
 | Frontend | React 19 + Vite (base `/projects/crypto-news/`) · Inter + JetBrains Mono |
 | Hosting | Hostinger VPS (shared), Nginx, systemd, GitLab CI/CD |
@@ -46,7 +48,9 @@ crypto-news/
 ├── main.py                  # FastAPI app + APScheduler (refresh on startup + interval)
 ├── api.py                   # Routes (/api/crypto-news/*)
 ├── rss.py                   # DEFAULT_FEEDS + fetch/parse/normalize (feeds come from DB)
+├── ai.py                    # Chat dispatcher → Grok or Gemini per AI settings
 ├── grok.py                  # Grok (xAI) chat client
+├── gemini.py                # Gemini (Google) chat client
 ├── auth.py                  # Admin JWT + bcrypt
 ├── database.py              # Motor: articles + settings (coins/feeds/admin), seed defaults
 ├── config.py                # Env loader (Mongo, Grok, JWT_SECRET, ADMIN_*)
@@ -89,6 +93,7 @@ crypto-news/
 | POST | `/api/crypto-news/admin/login` | Admin login → JWT |
 | GET/PUT | `/api/crypto-news/admin/coins` | Read / save chart coin pairs |
 | GET/PUT | `/api/crypto-news/admin/feeds` | Read / save RSS sources (PUT also refetches) |
+| GET/PUT | `/api/crypto-news/admin/ai-settings` | Read / save provider + per-provider model |
 
 > **Admin:** seeded on first run from `ADMIN_USERNAME` / `ADMIN_PASSWORD` env
 > (default `admin` / `changeme123`). Coin pairs and feeds live in the `settings`

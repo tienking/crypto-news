@@ -14,7 +14,7 @@ function renderMd(text) {
   });
 }
 
-const WELCOME = { role: "assistant", content: "Hi! I'm your crypto news assistant powered by Grok.\nAsk me about the latest news, a coin, a project, or what's moving the market." };
+const WELCOME = { role: "assistant", content: "Hi! I'm your crypto news AI assistant.\nAsk me about the latest news, a coin, a project, or what's moving the market." };
 const SUGGESTED = ["What's the top crypto news today?", "Summarize the latest Bitcoin news", "What is Ethereum staking?"];
 
 function Bubble({ msg }) {
@@ -34,6 +34,7 @@ export default function ChatPopup() {
   const [messages, setMessages] = useState([WELCOME]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [provider, setProvider] = useState("");
   const bottomRef = useRef(null);
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, loading]);
@@ -46,7 +47,8 @@ export default function ChatPopup() {
     setMessages(prev => [...prev, { role: "user", content: text }]);
     setLoading(true);
     try {
-      const { reply } = await chat(text, history);
+      const { reply, provider: p } = await chat(text, history);
+      if (p) setProvider(p);
       setMessages(prev => [...prev, { role: "assistant", content: reply || "—" }]);
     } catch {
       setMessages(prev => [...prev, { role: "assistant", content: "Something went wrong. Please try again." }]);
@@ -64,7 +66,7 @@ export default function ChatPopup() {
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <div style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--accent)" }} />
               <span style={{ fontSize: 13, fontWeight: 600 }}>Crypto AI</span>
-              <span style={{ fontSize: 10, color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>· Grok</span>
+              {provider && <span style={{ fontSize: 10, color: "var(--text-muted)", fontFamily: "var(--font-mono)", textTransform: "capitalize" }}>· {provider}</span>}
             </div>
             <button onClick={() => setOpen(false)} style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: 20, lineHeight: 1, padding: "0 4px" }}>×</button>
           </div>

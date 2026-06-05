@@ -2,9 +2,10 @@ from fastapi import APIRouter, Query, HTTPException, Depends
 from pydantic import BaseModel
 from typing import List, Dict, Optional
 from database import (list_articles, get_article, list_sources, upsert_articles, get_recent_articles,
-                      get_coins, set_coins, get_feeds, set_feeds, get_admin)
+                      get_coins, set_coins, get_feeds, set_feeds, get_admin,
+                      get_ai_settings, set_ai_settings)
 from rss import fetch_all
-from grok import grok_chat
+from ai import ai_chat
 from auth import create_token, verify_admin, check_password
 
 router = APIRouter()
@@ -64,17 +65,18 @@ async def chat(req: ChatRequest):
         f"- [{a.get('source','')}] {a.get('title','')} ({a.get('published','')}) — {a.get('summary','')}"
         for a in recent
     )
-    messages = [{"role": "system", "content": SYSTEM_PROMPT + "\n=== LATEST HEADLINES ===\n" + context}]
-    for m in (req.history or [])[-8:]:
-        role = "assistant" if m.get("role") == "assistant" else "user"
-        messages.append({"role": role, "content": m.get("content", "")})
-    messages.append({"role": "user", "content": req.message})
+    system = SYSTEM_PROMPT + "\n=== LATEST HEADLINES ===\n" + context
+    conversation = [
+        {"role": ("assistant" if m.get("role") == "assistant" else "user"), "content": m.get("content", "")}
+        for m in (req.history or [])[-8:]
+    ]
+    conversation.append({"role": "user", "content": req.message})
     try:
-        reply = await grok_chat(messages)
-        return {"reply": reply}
+        reply, provider = await ai_chat(system, conversation)
+        return {"reply": reply, "provider": provider}
     except Exception as e:
         print(f"[chat] error: {e}")
-        return {"reply": "Sorry, the assistant is unavailable right now. Please try again."}
+        return {"reply": "Sorry, the assistant is unavailable right now. Please try again.", "provider": None}
 
 
 # ── Public: chart coins ─────────────────────────────────────────────────────────
@@ -132,3 +134,19 @@ async def admin_set_feeds(data: FeedsUpdate, _: str = Depends(verify_admin)):
     items = await fetch_all(feeds)
     inserted = await upsert_articles(items)
     return {"ok": True, "fetched": len(items), "inserted": inserted}
+
+
+class AISettingsUpdate(BaseModel):
+    provider: str                # "grok" | "gemini"
+    grok_model: str
+    gemini_model: str
+
+@router.get("/api/crypto-news/admin/ai-settings")
+async def admin_get_ai(_: str = Depends(verify_admin)):
+    return await get_ai_settings()
+
+@router.put("/api/crypto-news/admin/ai-settings")
+async def admin_set_ai(data: AISettingsUpdate, _: str = Depends(verify_admin)):
+    provider = data.provider if data.provider in ("grok", "gemini") else "grok"
+    await set_ai_settings({"provider": provider, "grok_model": data.grok_model, "gemini_model": data.gemini_model})
+    return {"ok": True}
