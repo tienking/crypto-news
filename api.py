@@ -99,6 +99,7 @@ class CoinItem(BaseModel):
 class FeedItem(BaseModel):
     name: str
     url: str
+    enabled: bool = True
 
 class CoinsUpdate(BaseModel):
     items: List[CoinItem]
@@ -130,8 +131,9 @@ async def admin_get_feeds(_: str = Depends(verify_admin)):
 async def admin_set_feeds(data: FeedsUpdate, _: str = Depends(verify_admin)):
     feeds = [f.model_dump() for f in data.items]
     await set_feeds(feeds)
-    # fetch immediately with the new feed list
-    items = await fetch_all(feeds)
+    # fetch immediately with the enabled feeds only
+    enabled = [f for f in feeds if f.get("enabled", True)]
+    items = await fetch_all(enabled)
     inserted = await upsert_articles(items)
     return {"ok": True, "fetched": len(items), "inserted": inserted}
 

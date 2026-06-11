@@ -90,6 +90,49 @@ function ListEditor({ title, fields, items, setItems }) {
   );
 }
 
+// ── Feeds editor (with enable/disable toggle per source) ─────────────────────────
+
+function FeedsEditor({ feeds, setFeeds }) {
+  const update = (i, key, val) => setFeeds(feeds.map((f, idx) => idx === i ? { ...f, [key]: val } : f));
+  const toggle = (i) => setFeeds(feeds.map((f, idx) => idx === i ? { ...f, enabled: f.enabled === false ? true : false } : f));
+  const remove = (i) => setFeeds(feeds.filter((_, idx) => idx !== i));
+  const add = () => setFeeds([...feeds, { name: "", url: "", enabled: true }]);
+
+  return (
+    <div>
+      <h2 style={{ fontSize: 13, fontFamily: "var(--font-mono)", color: "var(--text-muted)", letterSpacing: "0.06em", marginBottom: 12 }}>ON/OFF · NAME · RSS URL</h2>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {feeds.map((f, i) => {
+          const on = f.enabled !== false;
+          return (
+            <div key={i} style={{ display: "grid", gridTemplateColumns: "auto 1fr 2fr auto", gap: 8, alignItems: "center", opacity: on ? 1 : 0.5 }}>
+              <button onClick={() => toggle(i)} title={on ? "Enabled — click to disable" : "Disabled — click to enable"}
+                style={{
+                  width: 46, height: 30, borderRadius: 15, cursor: "pointer", position: "relative",
+                  border: `1px solid ${on ? "var(--accent-border)" : "var(--border)"}`,
+                  background: on ? "var(--accent-dim)" : "var(--bg)", transition: "all .15s",
+                }}>
+                <span style={{
+                  position: "absolute", top: 3, left: on ? 19 : 3, width: 22, height: 22, borderRadius: "50%",
+                  background: on ? "var(--accent)" : "var(--text-muted)", transition: "left .15s",
+                }} />
+              </button>
+              <input value={f.name || ""} placeholder="CoinDesk" onChange={e => update(i, "name", e.target.value)} style={inp} />
+              <input value={f.url || ""} placeholder="https://…/rss" onChange={e => update(i, "url", e.target.value)} style={{ ...inp, fontFamily: "var(--font-mono)" }} />
+              <button onClick={() => remove(i)} title="Remove"
+                style={{ width: 30, height: 30, borderRadius: 7, border: "1px solid rgba(248,113,113,0.3)", background: "rgba(248,113,113,0.08)", color: "#f87171", cursor: "pointer", fontSize: 13 }}>✕</button>
+            </div>
+          );
+        })}
+      </div>
+      <button onClick={add}
+        style={{ marginTop: 10, width: "100%", padding: 9, borderRadius: 9, border: "1px dashed var(--border)", background: "none", color: "var(--text-muted)", fontSize: 13, cursor: "pointer", fontFamily: "var(--font-display)" }}>
+        + Add
+      </button>
+    </div>
+  );
+}
+
 // ── Dashboard ────────────────────────────────────────────────────────────────────
 
 function Dashboard({ token, onLogout }) {
@@ -224,12 +267,8 @@ function Dashboard({ token, onLogout }) {
               {savingFeeds ? "Saving..." : "Save"}
             </button>
           </div>
-          <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 12 }}>Saving fetches the new feeds immediately. Some sites (Cloudflare) block server-side requests.</p>
-          <ListEditor title="NAME · RSS URL" items={feeds} setItems={setFeeds}
-            fields={[
-              { key: "name", placeholder: "CoinDesk", w: "1fr" },
-              { key: "url", placeholder: "https://…/rss", w: "2fr", mono: true },
-            ]} />
+          <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 12 }}>Toggle a source off to hide its old articles and stop fetching new ones. Saving refetches the enabled feeds.</p>
+          <FeedsEditor feeds={feeds} setFeeds={setFeeds} />
         </section>
       </main>
     </div>

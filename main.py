@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from config import REFRESH_MINUTES
-from database import ensure_indexes, seed_defaults, upsert_articles, get_feeds
+from database import ensure_indexes, seed_defaults, upsert_articles, get_enabled_feeds
 from rss import fetch_all
 from api import router
 
@@ -10,7 +10,7 @@ scheduler = AsyncIOScheduler()
 
 
 async def refresh_job():
-    feeds = await get_feeds()
+    feeds = await get_enabled_feeds()
     items = await fetch_all(feeds)
     inserted = await upsert_articles(items)
     print(f"[refresh] feeds={len(feeds)} fetched={len(items)} inserted={inserted}")

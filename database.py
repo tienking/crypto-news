@@ -55,10 +55,18 @@ async def set_coins(items: list[dict]):
 
 async def get_feeds():
     d = await settings_col.find_one({"type": "feeds"}, {"_id": 0})
-    return d["list"] if d else DEFAULT_FEEDS
+    items = d["list"] if d else DEFAULT_FEEDS
+    # legacy items without `enabled` default to enabled
+    return [{"name": f.get("name", ""), "url": f.get("url", ""), "enabled": f.get("enabled", True)} for f in items]
 
 async def set_feeds(items: list[dict]):
     await settings_col.update_one({"type": "feeds"}, {"$set": {"list": items}}, upsert=True)
+
+async def get_enabled_feeds():
+    return [f for f in await get_feeds() if f.get("enabled", True)]
+
+async def get_disabled_sources():
+    return [f["name"] for f in await get_feeds() if not f.get("enabled", True)]
 
 async def get_admin():
     return await settings_col.find_one({"type": "admin"}, {"_id": 0})
@@ -94,14 +102,18 @@ async def upsert_articles(items: list[dict]) -> int:
 
 
 async def list_articles(page: int = 1, limit: int = 24, source: str | None = None, q: str | None = None):
-    query = {}
+    disabled = await get_disabled_sources()
+    conds = []
     if source:
-        query["source"] = source
+        conds.append({"source": source})
+    if disabled:
+        conds.append({"source": {"$nin": disabled}})
     if q:
-        query["$or"] = [
+        conds.append({"$or": [
             {"title": {"$regex": q, "$options": "i"}},
             {"summary": {"$regex": q, "$options": "i"}},
-        ]
+        ]})
+    query = {"$and": conds} if conds else {}
     total = await articles_col.count_documents(query)
     cursor = (articles_col.find(query, {"content": 0})
               .sort("published", DESCENDING)
@@ -130,12 +142,16 @@ async def get_article(article_id: str):
 
 
 async def list_sources():
-    return sorted(await articles_col.distinct("source"))
+    disabled = set(await get_disabled_sources())
+    srcs = await articles_col.distinct("source")
+    return sorted(s for s in srcs if s not in disabled)
 
 
 async def get_recent_articles(limit: int = 30):
-    """Lightweight recent headlines for the chatbot context."""
-    cursor = (articles_col.find({}, {"_id": 0, "title": 1, "source": 1, "summary": 1, "published": 1})
+    """Lightweight recent headlines for the chatbot context (excludes disabled sources)."""
+    disabled = await get_disabled_sources()
+    query = {"source": {"$nin": disabled}} if disabled else {}
+    cursor = (articles_col.find(query, {"_id": 0, "title": 1, "source": 1, "summary": 1, "published": 1})
               .sort("published", DESCENDING)
               .limit(limit))
     items = await cursor.to_list(length=limit)
