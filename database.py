@@ -89,6 +89,9 @@ async def get_disabled_sources():
 async def get_admin():
     return await settings_col.find_one({"type": "admin"}, {"_id": 0})
 
+async def set_admin_password(hashed_password: str):
+    await settings_col.update_one({"type": "admin"}, {"$set": {"hashed_password": hashed_password}}, upsert=True)
+
 async def get_ai_settings():
     d = await settings_col.find_one({"type": "ai"}, {"_id": 0})
     if not d:

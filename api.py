@@ -2,11 +2,11 @@ from fastapi import APIRouter, Query, HTTPException, Depends
 from pydantic import BaseModel
 from typing import List, Dict, Optional
 from database import (list_articles, get_article, list_sources, upsert_articles, get_recent_articles,
-                      get_coins, set_coins, get_feeds, set_feeds, get_admin,
+                      get_coins, set_coins, get_feeds, set_feeds, get_admin, set_admin_password,
                       get_ai_settings, set_ai_settings)
 from rss import fetch_all
 from ai import ai_chat
-from auth import create_token, verify_admin, check_password
+from auth import create_token, verify_admin, check_password, hash_password
 
 router = APIRouter()
 
@@ -151,4 +151,19 @@ async def admin_get_ai(_: str = Depends(verify_admin)):
 async def admin_set_ai(data: AISettingsUpdate, _: str = Depends(verify_admin)):
     provider = data.provider if data.provider in ("grok", "gemini") else "grok"
     await set_ai_settings({"provider": provider, "grok_model": data.grok_model, "gemini_model": data.gemini_model})
+    return {"ok": True}
+
+
+class PasswordChange(BaseModel):
+    current_password: str
+    new_password: str
+
+@router.put("/api/crypto-news/admin/password")
+async def admin_change_password(data: PasswordChange, _: str = Depends(verify_admin)):
+    admin = await get_admin()
+    if not admin or not check_password(data.current_password, admin.get("hashed_password", "")):
+        raise HTTPException(status_code=401, detail="Current password is incorrect")
+    if len(data.new_password) < 6:
+        raise HTTPException(status_code=400, detail="New password must be at least 6 characters")
+    await set_admin_password(hash_password(data.new_password))
     return {"ok": True}

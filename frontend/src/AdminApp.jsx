@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { adminLogin, adminGetCoins, adminSaveCoins, adminGetFeeds, adminSaveFeeds, adminGetAi, adminSaveAi } from "./lib/api";
+import { adminLogin, adminGetCoins, adminSaveCoins, adminGetFeeds, adminSaveFeeds, adminGetAi, adminSaveAi, adminChangePassword } from "./lib/api";
 
 const NEWS_URL = "/projects/crypto-news/";
 
@@ -143,6 +143,9 @@ function Dashboard({ token, onLogout }) {
   const [savingCoins, setSavingCoins] = useState(false);
   const [savingFeeds, setSavingFeeds] = useState(false);
   const [savingAi, setSavingAi] = useState(false);
+  const [pw, setPw] = useState({ current: "", next: "" });
+  const [savingPw, setSavingPw] = useState(false);
+  const [pwErr, setPwErr] = useState("");
   const [msg, setMsg] = useState("");
 
   const flash = (m) => { setMsg(m); setTimeout(() => setMsg(""), 3000); };
@@ -174,6 +177,18 @@ function Dashboard({ token, onLogout }) {
       flash(`✓ Feeds saved · fetched ${res.fetched}, +${res.inserted} new`);
     } catch { flash("Failed to save feeds"); }
     setSavingFeeds(false);
+  };
+
+  const changePassword = async () => {
+    setPwErr("");
+    if (pw.next.length < 6) { setPwErr("New password must be at least 6 characters."); return; }
+    setSavingPw(true);
+    try {
+      await adminChangePassword(token, pw.current, pw.next);
+      setPw({ current: "", next: "" });
+      flash("✓ Password changed");
+    } catch (e) { setPwErr(e.message || "Change failed"); }
+    setSavingPw(false);
   };
 
   if (loading) return (
@@ -269,6 +284,29 @@ function Dashboard({ token, onLogout }) {
           </div>
           <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 12 }}>Toggle a source off to hide its old articles and stop fetching new ones. Saving refetches the enabled feeds.</p>
           <FeedsEditor feeds={feeds} setFeeds={setFeeds} />
+        </section>
+
+        {/* Change password */}
+        <section>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+            <h1 style={{ fontSize: 17, fontWeight: 700 }}>Change password</h1>
+            <button onClick={changePassword} disabled={savingPw || !pw.current || !pw.next}
+              style={{ padding: "8px 20px", borderRadius: 9, border: "none", background: "var(--accent)", color: "#000", fontSize: 13, fontWeight: 700, cursor: (savingPw || !pw.current || !pw.next) ? "default" : "pointer", opacity: (savingPw || !pw.current || !pw.next) ? 0.6 : 1 }}>
+              {savingPw ? "Saving..." : "Update"}
+            </button>
+          </div>
+          <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 12, padding: 16, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+            <div>
+              <label style={{ fontSize: 12, color: "var(--text-muted)", display: "block", marginBottom: 5 }}>Current password</label>
+              <input type="password" value={pw.current} onChange={e => setPw({ ...pw, current: e.target.value })} style={inp} />
+            </div>
+            <div>
+              <label style={{ fontSize: 12, color: "var(--text-muted)", display: "block", marginBottom: 5 }}>New password</label>
+              <input type="password" value={pw.next} onChange={e => setPw({ ...pw, next: e.target.value })}
+                onKeyDown={e => e.key === "Enter" && changePassword()} style={inp} />
+            </div>
+            {pwErr && <p style={{ gridColumn: "1/-1", fontSize: 12, color: "#f87171", margin: 0 }}>{pwErr}</p>}
+          </div>
         </section>
       </main>
     </div>

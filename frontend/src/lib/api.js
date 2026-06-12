@@ -87,6 +87,15 @@ export async function adminSaveAi(token, settings) {
   return res.json();
 }
 
+export async function adminChangePassword(token, current_password, new_password) {
+  const res = await fetch(`${BASE}/admin/password`, { method: "PUT", headers: authH(token), body: JSON.stringify({ current_password, new_password }) });
+  if (!res.ok) {
+    const d = await res.json().catch(() => ({}));
+    throw new Error(d.detail || "Change failed");
+  }
+  return res.json();
+}
+
 // "3h ago", "2d ago", etc.
 export function timeAgo(iso) {
   if (!iso) return "";
