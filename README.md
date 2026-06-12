@@ -16,6 +16,8 @@ with in-app reading, source filters, and search.
    **upserted into MongoDB, deduped by `guid`** — so each refresh only adds new items.
 3. An in-process **APScheduler** job refreshes every `REFRESH_MINUTES` (default 15) and
    once on startup. No external cron needed.
+   A **MongoDB TTL index** auto-deletes articles older than `ARTICLE_TTL_DAYS` (default 30)
+   so storage stays bounded — no cleanup job required.
 4. The React frontend lists articles (featured + grid), filters by source, searches, and
    opens an **in-app reader** (with a link to the original).
 5. An **AI chatbot** (bottom-right) answers questions about crypto and the latest news —

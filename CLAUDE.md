@@ -47,6 +47,8 @@ Use `type: docs` only when the commit touches docs exclusively.
 - **Vite base**: `/projects/crypto-news/`.
 - **RSS**: feed list lives in `rss.py` (`FEEDS`). Articles are deduped by `guid` (upsert).
   Refresh runs in-process via APScheduler every `REFRESH_MINUTES` (default 15) + on startup.
+- **Retention**: a MongoDB TTL index on `published` (`ARTICLE_TTL_DAYS`, default 30) auto-
+  deletes old articles. The `{published: 1}` TTL index also serves the descending sort.
 - **Chatbot**: provider is switchable between **Grok (xAI)** (`grok.py`) and **Gemini**
   (`gemini.py`), dispatched by `ai.py` per the `settings` type="ai" doc (provider +
   grok_model + gemini_model), editable in Admin. Keys: `XAI_API_KEY`, `GEMINI_API_KEY`.

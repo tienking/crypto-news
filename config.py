@@ -6,6 +6,8 @@ load_dotenv()
 MONGODB_URL = os.getenv("MONGODB_URL")
 # Minutes between RSS refresh runs (in-app APScheduler).
 REFRESH_MINUTES = int(os.getenv("REFRESH_MINUTES", "15"))
+# Auto-delete articles older than this many days (MongoDB TTL index).
+ARTICLE_TTL_DAYS = int(os.getenv("ARTICLE_TTL_DAYS", "30"))
 
 # Chatbot providers. Active provider + per-provider model are stored in MongoDB
 # (settings type="ai"); the env vars below are API keys + seed defaults.

@@ -1,6 +1,7 @@
 from motor.motor_asyncio import AsyncIOMotorClient
-from pymongo import UpdateOne, DESCENDING
-from config import MONGODB_URL, ADMIN_USERNAME, ADMIN_PASSWORD, AI_PROVIDER, GROK_MODEL, GEMINI_MODEL
+from pymongo import UpdateOne, DESCENDING, ASCENDING
+from config import (MONGODB_URL, ADMIN_USERNAME, ADMIN_PASSWORD, AI_PROVIDER,
+                    GROK_MODEL, GEMINI_MODEL, ARTICLE_TTL_DAYS)
 from rss import DEFAULT_FEEDS
 from datetime import datetime, timezone
 
@@ -21,8 +22,25 @@ DEFAULT_COINS = [
 
 async def ensure_indexes():
     await articles_col.create_index("guid", unique=True)
-    await articles_col.create_index([("published", DESCENDING)])
     await articles_col.create_index("source")
+    # TTL index: MongoDB auto-deletes articles older than ARTICLE_TTL_DAYS.
+    # A {published: 1} index also serves the descending sort (scanned backwards).
+    await _ensure_ttl_index()
+
+
+async def _ensure_ttl_index():
+    name = "published_ttl"
+    ttl_seconds = ARTICLE_TTL_DAYS * 86400
+    info = await articles_col.index_information()
+    # Drop the old non-TTL sort index if it exists (now redundant).
+    if "published_-1" in info:
+        await articles_col.drop_index("published_-1")
+    existing = info.get(name)
+    if existing and existing.get("expireAfterSeconds") != ttl_seconds:
+        await articles_col.drop_index(name)  # TTL value changed → recreate
+        existing = None
+    if not existing:
+        await articles_col.create_index([("published", ASCENDING)], name=name, expireAfterSeconds=ttl_seconds)
 
 
 # ── Settings: coins / feeds / admin (seeded on first run) ──────────────────────
