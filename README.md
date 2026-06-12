@@ -97,9 +97,13 @@ crypto-news/
 | GET/PUT | `/api/crypto-news/admin/feeds` | Read / save RSS sources (PUT also refetches) |
 | GET/PUT | `/api/crypto-news/admin/ai-settings` | Read / save provider + per-provider model |
 
-> **Admin:** seeded on first run from `ADMIN_USERNAME` / `ADMIN_PASSWORD` env
-> (default `admin` / `changeme123`). Coin pairs and feeds live in the `settings`
-> collection — defaults are seeded once, then editable via the Admin page.
+> **Admin:** seeded on first run from `ADMIN_USERNAME` (default `admin`) /
+> `ADMIN_PASSWORD` env. If `ADMIN_PASSWORD` is unset, a random one is generated and
+> printed once at startup — there is no guessable default. Coin pairs and feeds live
+> in the `settings` collection — seeded once, then editable via the Admin page.
+>
+> **Required env:** `MONGODB_URL` and `JWT_SECRET` are mandatory — the app refuses to
+> start without them (no fallback secret). Generate `JWT_SECRET` as a long random string.
 
 ---
 
