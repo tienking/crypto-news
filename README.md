@@ -92,7 +92,7 @@ crypto-news/
 | GET | `/api/crypto-news/coins` | Chart coin pairs (public, for MarketChart) |
 | POST | `/api/crypto-news/refresh` | Manually trigger an RSS refresh |
 | POST | `/api/crypto-news/chat` | Grok chatbot (`message`, `history`) → `{reply}` |
-| POST | `/api/crypto-news/admin/login` | Admin login → JWT |
+| POST | `/api/crypto-news/admin/login` | Admin login → JWT (5 failed attempts per IP → 429, locked 5 min) |
 | GET/PUT | `/api/crypto-news/admin/coins` | Read / save chart coin pairs |
 | GET/PUT | `/api/crypto-news/admin/feeds` | Read / save RSS sources (PUT also refetches) |
 | GET/PUT | `/api/crypto-news/admin/ai-settings` | Read / save provider + per-provider model |

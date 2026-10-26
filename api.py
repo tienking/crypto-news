@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Query, HTTPException, Depends
+from fastapi import APIRouter, Query, HTTPException, Depends, Request
 from pydantic import BaseModel
 from typing import List, Dict, Optional
+import time
 from database import (list_articles, get_article, list_sources, upsert_articles, get_recent_articles,
                       get_coins, set_coins, get_feeds, set_feeds, get_admin, set_admin_password,
                       get_ai_settings, set_ai_settings)
@@ -107,11 +108,47 @@ class CoinsUpdate(BaseModel):
 class FeedsUpdate(BaseModel):
     items: List[FeedItem]
 
+# Login rate limiting (in-memory, per client IP, resets on restart).
+_login_attempts: dict = {}  # ip -> {"count": int, "locked_until": float}
+_MAX_ATTEMPTS = 5
+_LOCKOUT_SECONDS = 300  # 5 minutes
+
+def _client_ip(request: Request) -> str:
+    # Behind nginx the socket peer is always 127.0.0.1; nginx overwrites X-Real-IP
+    # with the real $remote_addr, so it can't be spoofed by the client.
+    host = request.client.host if request.client else ""
+    if host in ("127.0.0.1", "::1"):
+        return request.headers.get("x-real-ip") or host
+    return host
+
+def _check_login_rate(ip: str):
+    entry = _login_attempts.get(ip)
+    if entry and entry["locked_until"] > time.time():
+        mins, secs = divmod(int(entry["locked_until"] - time.time()), 60)
+        raise HTTPException(status_code=429, detail=f"Too many failed attempts. Try again in {mins}m {secs}s.")
+
+def _record_login_failure(ip: str):
+    now = time.time()
+    if len(_login_attempts) > 10000:  # drop stale entries so the dict can't grow unbounded
+        for k in [k for k, v in _login_attempts.items() if v["locked_until"] < now]:
+            _login_attempts.pop(k, None)
+    entry = _login_attempts.get(ip)
+    if not entry or (entry["locked_until"] and entry["locked_until"] <= now):
+        entry = {"count": 0, "locked_until": 0.0}  # fresh window after a lockout expires
+    entry["count"] += 1
+    if entry["count"] >= _MAX_ATTEMPTS:
+        entry["locked_until"] = now + _LOCKOUT_SECONDS
+    _login_attempts[ip] = entry
+
 @router.post("/api/crypto-news/admin/login")
-async def admin_login(req: LoginRequest):
+async def admin_login(req: LoginRequest, request: Request):
+    ip = _client_ip(request)
+    _check_login_rate(ip)
     admin = await get_admin()
     if not admin or req.username != admin.get("username") or not check_password(req.password, admin.get("hashed_password", "")):
+        _record_login_failure(ip)
         raise HTTPException(status_code=401, detail="Invalid username or password")
+    _login_attempts.pop(ip, None)
     return {"access_token": create_token(req.username), "token_type": "bearer"}
 
 @router.get("/api/crypto-news/admin/coins")

@@ -47,6 +47,10 @@ export async function adminLogin(username, password) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username, password }),
   });
+  if (res.status === 429) {
+    const d = await res.json().catch(() => ({}));
+    throw new Error(d.detail || "Too many failed attempts. Please try again later.");
+  }
   if (!res.ok) throw new Error("Invalid username or password");
   return res.json(); // { access_token }
 }

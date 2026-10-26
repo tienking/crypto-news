@@ -33,7 +33,7 @@ function Login({ onLogin }) {
       const { access_token } = await adminLogin(u, p);
       localStorage.setItem("cn_admin_token", access_token);
       onLogin(access_token);
-    } catch { setErr("Invalid username or password."); }
+    } catch (e) { setErr(e.message || "Invalid username or password."); }
     setLoading(false);
   };
 
