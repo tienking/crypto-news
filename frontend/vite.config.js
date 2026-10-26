@@ -1,19 +1,14 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import { execSync } from "child_process";
+import { readFileSync } from "fs";
 
-// Build stamp shown in the UI to confirm which commit is deployed.
-// The VPS deploy script runs `git pull` + `npm run build`, so git is available here.
-function buildVersion() {
-  let hash = "dev";
-  try { hash = execSync("git rev-parse --short HEAD").toString().trim(); } catch {}
-  const time = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" }).slice(0, 16);
-  return `${hash} · ${time}`;
-}
+// App version (semver x.y.z from package.json) shown in the UI to confirm what is deployed.
+// Bump it in every code commit: x = major change, y = new feature, z = fix / small tweak.
+const { version } = JSON.parse(readFileSync(new URL("./package.json", import.meta.url), "utf-8"));
 
 export default defineConfig({
   plugins: [react()],
-  define: { __APP_VERSION__: JSON.stringify(buildVersion()) },
+  define: { __APP_VERSION__: JSON.stringify(version) },
   base: "/projects/crypto-news/",
   server: {
     proxy: {
